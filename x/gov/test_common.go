@@ -61,9 +61,11 @@ func getInitChainer(mapp *mock.App, keeper Keeper, stakeKeeper stake.Keeper) sdk
 		stakeGenesis := stake.DefaultGenesisState()
 		stakeGenesis.Pool.LooseTokens = 100000
 
-		stake.InitGenesis(ctx, stakeKeeper, stakeGenesis)
+		validators := stake.InitGenesis(ctx, stakeKeeper, stakeGenesis)
 		InitGenesis(ctx, keeper, DefaultGenesisState())
-		return abci.ResponseInitChain{}
+		return abci.ResponseInitChain{
+			Validators: validators,
+		}
 	}
 }
 

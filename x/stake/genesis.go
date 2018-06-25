@@ -1,9 +1,11 @@
 package stake
 
 import (
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/stake/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // InitGenesis sets the pool and parameters for the provided keeper and
@@ -11,7 +13,7 @@ import (
 // validator in the keeper along with manually setting the indexes. In
 // addition, it also sets any delegations found in data. Finally, it updates
 // the bonded validators.
-func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) (res []abci.Validator) {
 	keeper.SetPool(ctx, data.Pool)
 	keeper.SetNewParams(ctx, data.Params)
 	keeper.InitIntraTxCounter(ctx)
@@ -33,6 +35,13 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	keeper.UpdateBondedValidatorsFull(ctx)
+
+	vals := keeper.GetAllValidators(ctx)
+	res = make([]abci.Validator, len(vals))
+	for i, val := range vals {
+		res[i] = sdk.ABCIValidator(val)
+	}
+	return
 }
 
 // WriteGenesis returns a GenesisState for a given context and keeper. The
