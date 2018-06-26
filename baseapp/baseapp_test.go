@@ -790,7 +790,7 @@ func TestMultipleBurn(t *testing.T) {
 		panic(err)
 	}
 
-	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, &auth.BaseAccount{})
+	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, auth.ProtoBaseAccount)
 	app.accountKeeper = bank.NewKeeper(app.accountMapper)
 
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, auth.FeeCollectionKeeper{}))
@@ -837,7 +837,7 @@ func TestBurnMultipleOwners(t *testing.T) {
 		panic(err)
 	}
 
-	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, &auth.BaseAccount{})
+	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, auth.ProtoBaseAccount)
 	app.accountKeeper = bank.NewKeeper(app.accountMapper)
 
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, auth.FeeCollectionKeeper{}))
@@ -904,7 +904,7 @@ func TestSendBurn(t *testing.T) {
 		panic(err)
 	}
 
-	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, &auth.BaseAccount{})
+	app.accountMapper = auth.NewAccountMapper(app.cdc, capKey, auth.ProtoBaseAccount)
 	app.accountKeeper = bank.NewKeeper(app.accountMapper)
 
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, auth.FeeCollectionKeeper{}))
