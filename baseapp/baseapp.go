@@ -199,36 +199,6 @@ func (app *BaseApp) initFromStore(mainKey sdk.StoreKey) error {
 		return errors.New("baseapp expects MultiStore with 'main' KVStore")
 	}
 
-	// XXX: Do we really need the header? What does it have that we want
-	// here that's not already in the CommitID ? If an app wants to have it,
-	// they can do so in their BeginBlocker. If we force it in baseapp,
-	// then either we force the AppHash to change with every block (since the header
-	// will be in the merkle store) or we can't write the state and the header to the
-	// db atomically without doing some surgery on the store interfaces ...
-
-	// if we've committed before, we expect <dbHeaderKey> to exist in the db
-	/*
-		var lastCommitID = app.cms.LastCommitID()
-		var header abci.Header
-
-		if !lastCommitID.IsZero() {
-			headerBytes := app.db.Get(dbHeaderKey)
-			if len(headerBytes) == 0 {
-				errStr := fmt.Sprintf("Version > 0 but missing key %s", dbHeaderKey)
-				return errors.New(errStr)
-			}
-			err := proto.Unmarshal(headerBytes, &header)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse Header")
-			}
-			lastVersion := lastCommitID.Version
-			if header.Height != lastVersion {
-				errStr := fmt.Sprintf("expected db://%s.Height %v but got %v", dbHeaderKey, lastVersion, header.Height)
-				return errors.New(errStr)
-			}
-		}
-	*/
-
 	return nil
 }
 
@@ -450,42 +420,10 @@ func (app *BaseApp) DeliverTx(txBytes []byte) (res abci.ResponseDeliverTx) {
 	}
 }
 
-// nolint - Mostly for testing
-func (app *BaseApp) Check(tx sdk.Tx) (result sdk.Result) {
-	return app.runTx(runTxModeCheck, nil, tx)
-}
-
-// nolint - full tx execution
-func (app *BaseApp) Simulate(tx sdk.Tx) (result sdk.Result) {
-	return app.runTx(runTxModeSimulate, nil, tx)
-}
-
-// nolint
-func (app *BaseApp) Deliver(tx sdk.Tx) (result sdk.Result) {
-	return app.runTx(runTxModeDeliver, nil, tx)
-}
-
-// txBytes may be nil in some cases, eg. in tests.
-// Also, in the future we may support "internal" transactions.
-func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk.Result) {
-	// Handle any panics.
-	defer func() {
-		if r := recover(); r != nil {
-			switch r.(type) {
-			case sdk.ErrorOutOfGas:
-				log := fmt.Sprintf("out of gas in location: %v", r.(sdk.ErrorOutOfGas).Descriptor)
-				result = sdk.ErrOutOfGas(log).Result()
-			default:
-				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
-				result = sdk.ErrInternal(log).Result()
-			}
-		}
-	}()
-
-	// Get the Msg.
-	var msgs = tx.GetMsgs()
+// Basic validator for msgs
+func validateMsgs(msgs []sdk.Msg) sdk.Error {
 	if msgs == nil || len(msgs) == 0 {
-		return sdk.ErrInternal("Tx.GetMsgs() must return at least one message in list").Result()
+		return sdk.ErrInternal("Tx.GetMsgs() must return at least one message in list")
 	}
 
 	for _, msg := range msgs {
@@ -493,12 +431,16 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		err := msg.ValidateBasic()
 		if err != nil {
 			err = err.WithDefaultCodespace(sdk.CodespaceRoot)
-			return err.Result()
+			return err
 		}
 	}
 
+	return nil
+}
+
+// Returns necessary components for evaluating msgs
+func (app *BaseApp) prepareTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (ctx sdk.Context, msCache sdk.CacheMultiStore, result sdk.Result, abort bool) {
 	// Get the context
-	var ctx sdk.Context
 	if mode == runTxModeCheck || mode == runTxModeSimulate {
 		ctx = app.checkState.ctx.WithTxBytes(txBytes)
 	} else {
@@ -513,9 +455,10 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 
 	// Run the ante handler.
 	if app.anteHandler != nil {
-		newCtx, result, abort := app.anteHandler(ctx, tx)
+		var newCtx sdk.Context
+		newCtx, result, abort = app.anteHandler(ctx, tx)
 		if abort {
-			return result
+			return
 		}
 		if !newCtx.IsZero() {
 			ctx = newCtx
@@ -523,7 +466,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	}
 
 	// Get the correct cache
-	var msCache sdk.CacheMultiStore
 	if mode == runTxModeCheck || mode == runTxModeSimulate {
 		// CacheWrap app.checkState.ms in case it fails.
 		msCache = app.checkState.CacheMultiStore()
@@ -534,6 +476,12 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 		ctx = ctx.WithMultiStore(msCache)
 	}
 
+	return
+}
+
+// Iterates through msgs and executes them
+func (app *BaseApp) runMsgs(mode runTxMode, ctx sdk.Context, msgs []sdk.Msg, msCache sdk.CacheMultiStore) sdk.Result {
+	var result sdk.Result
 	finalResult := sdk.Result{}
 	var logs []string
 	for i, msg := range msgs {
@@ -581,6 +529,40 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk
 	finalResult.Log = strings.Join(logs, "\n")
 
 	return finalResult
+
+}
+
+// txBytes may be nil in some cases, eg. in tests.
+// Also, in the future we may support "internal" transactions.
+func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx) (result sdk.Result) {
+	// Handle any panics.
+	defer func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case sdk.ErrorOutOfGas:
+				log := fmt.Sprintf("out of gas in location: %v", r.(sdk.ErrorOutOfGas).Descriptor)
+				result = sdk.ErrOutOfGas(log).Result()
+			default:
+				log := fmt.Sprintf("recovered: %v\nstack:\n%v", r, string(debug.Stack()))
+				result = sdk.ErrInternal(log).Result()
+			}
+		}
+	}()
+
+	// Get the Msg.
+	var msgs = tx.GetMsgs()
+
+	err := validateMsgs(msgs)
+	if err != nil {
+		return err.Result()
+	}
+
+	ctx, msCache, result, abort := app.prepareTx(mode, txBytes, tx)
+	if abort {
+		return result
+	}
+
+	return app.runMsgs(mode, ctx, msgs, msCache)
 }
 
 // Implements ABCI
