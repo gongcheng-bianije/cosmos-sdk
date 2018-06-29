@@ -8,6 +8,41 @@ import (
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
+var _ CacheKVStore = (*cacheKVStore)(nil)
+
+type cacheKVStore struct {
+	*cache
+	transient *cache
+}
+
+// nolint
+func NewCacheKVStore(parent KVStore) CacheKVStore {
+	ci := &cache{
+		cache:  make(map[string]cValue),
+		parent: parent,
+	}
+	return &cacheKVStore{ci, nil}
+}
+
+func (ci *cacheKVStore) Transient() KVStore {
+	if ci.transient == nil {
+		ci.transient = &cache{
+			cache:  make(map[string]cValue),
+			parent: ci.parent.Transient(),
+		}
+	}
+	return ci.transient
+}
+
+func (ci *cacheKVStore) Write() {
+	ci.cache.Write()
+	if ci.transient != nil {
+		ci.transient.Write()
+	}
+}
+
+var _ CacheKVStore = (*cache)(nil)
+
 // If value is nil but deleted is false, it means the parent doesn't have the
 // key.  (No need to delete upon Write())
 type cValue struct {
@@ -16,31 +51,20 @@ type cValue struct {
 	dirty   bool
 }
 
-// cacheKVStore wraps an in-memory cache around an underlying KVStore.
-type cacheKVStore struct {
+// cache wraps an in-memory cache around an underlying KVStore.
+type cache struct {
 	mtx    sync.Mutex
 	cache  map[string]cValue
 	parent KVStore
 }
 
-var _ CacheKVStore = (*cacheKVStore)(nil)
-
-// nolint
-func NewCacheKVStore(parent KVStore) *cacheKVStore {
-	ci := &cacheKVStore{
-		cache:  make(map[string]cValue),
-		parent: parent,
-	}
-	return ci
-}
-
 // Implements Store.
-func (ci *cacheKVStore) GetStoreType() StoreType {
+func (ci *cache) GetStoreType() StoreType {
 	return ci.parent.GetStoreType()
 }
 
 // Implements KVStore.
-func (ci *cacheKVStore) Get(key []byte) (value []byte) {
+func (ci *cache) Get(key []byte) (value []byte) {
 	ci.mtx.Lock()
 	defer ci.mtx.Unlock()
 	ci.assertValidKey(key)
@@ -57,7 +81,7 @@ func (ci *cacheKVStore) Get(key []byte) (value []byte) {
 }
 
 // Implements KVStore.
-func (ci *cacheKVStore) Set(key []byte, value []byte) {
+func (ci *cache) Set(key []byte, value []byte) {
 	ci.mtx.Lock()
 	defer ci.mtx.Unlock()
 	ci.assertValidKey(key)
@@ -66,13 +90,13 @@ func (ci *cacheKVStore) Set(key []byte, value []byte) {
 }
 
 // Implements KVStore.
-func (ci *cacheKVStore) Has(key []byte) bool {
+func (ci *cache) Has(key []byte) bool {
 	value := ci.Get(key)
 	return value != nil
 }
 
 // Implements KVStore.
-func (ci *cacheKVStore) Delete(key []byte) {
+func (ci *cache) Delete(key []byte) {
 	ci.mtx.Lock()
 	defer ci.mtx.Unlock()
 	ci.assertValidKey(key)
@@ -81,12 +105,22 @@ func (ci *cacheKVStore) Delete(key []byte) {
 }
 
 // Implements KVStore
-func (ci *cacheKVStore) Prefix(prefix []byte) KVStore {
+func (ci *cache) Prefix(prefix []byte) KVStore {
 	return prefixStore{ci, prefix}
 }
 
+// Implements KVStore
+func (ci *cache) Gas(meter GasMeter, config GasConfig) KVStore {
+	return NewGasKVStore(meter, config, ci)
+}
+
+// Implements KVStore
+func (ci *cache) Transient() KVStore {
+	panic("Transient() called on cache")
+}
+
 // Implements CacheKVStore.
-func (ci *cacheKVStore) Write() {
+func (ci *cache) Write() {
 	ci.mtx.Lock()
 	defer ci.mtx.Unlock()
 
@@ -118,10 +152,10 @@ func (ci *cacheKVStore) Write() {
 }
 
 //----------------------------------------
-// To cache-wrap this cacheKVStore further.
+// To cache-wrap this cache further.
 
 // Implements CacheWrapper.
-func (ci *cacheKVStore) CacheWrap() CacheWrap {
+func (ci *cache) CacheWrap() CacheWrap {
 	return NewCacheKVStore(ci)
 }
 
@@ -129,16 +163,16 @@ func (ci *cacheKVStore) CacheWrap() CacheWrap {
 // Iteration
 
 // Implements KVStore.
-func (ci *cacheKVStore) Iterator(start, end []byte) Iterator {
+func (ci *cache) Iterator(start, end []byte) Iterator {
 	return ci.iterator(start, end, true)
 }
 
 // Implements KVStore.
-func (ci *cacheKVStore) ReverseIterator(start, end []byte) Iterator {
+func (ci *cache) ReverseIterator(start, end []byte) Iterator {
 	return ci.iterator(start, end, false)
 }
 
-func (ci *cacheKVStore) iterator(start, end []byte, ascending bool) Iterator {
+func (ci *cache) iterator(start, end []byte, ascending bool) Iterator {
 	var parent, cache Iterator
 	if ascending {
 		parent = ci.parent.Iterator(start, end)
@@ -151,7 +185,7 @@ func (ci *cacheKVStore) iterator(start, end []byte, ascending bool) Iterator {
 }
 
 // Constructs a slice of dirty items, to use w/ memIterator.
-func (ci *cacheKVStore) dirtyItems(ascending bool) []cmn.KVPair {
+func (ci *cache) dirtyItems(ascending bool) []cmn.KVPair {
 	items := make([]cmn.KVPair, 0, len(ci.cache))
 	for key, cacheValue := range ci.cache {
 		if !cacheValue.dirty {
@@ -172,14 +206,14 @@ func (ci *cacheKVStore) dirtyItems(ascending bool) []cmn.KVPair {
 //----------------------------------------
 // etc
 
-func (ci *cacheKVStore) assertValidKey(key []byte) {
+func (ci *cache) assertValidKey(key []byte) {
 	if key == nil {
 		panic("key is nil")
 	}
 }
 
 // Only entrypoint to mutate ci.cache.
-func (ci *cacheKVStore) setCacheValue(key, value []byte, deleted bool, dirty bool) {
+func (ci *cache) setCacheValue(key, value []byte, deleted bool, dirty bool) {
 	cacheValue := cValue{
 		value:   value,
 		deleted: deleted,
