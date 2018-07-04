@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/crypto/ripemd160"
 
+	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -25,6 +26,7 @@ const (
 type rootMultiStore struct {
 	db           dbm.DB
 	lastCommitID CommitID
+	pruning      string
 	storesParams map[StoreKey]storeParams
 	stores       map[StoreKey]CommitStore
 	keysByName   map[string]StoreKey
@@ -40,6 +42,7 @@ func NewCommitMultiStore(db dbm.DB) *rootMultiStore {
 		storesParams: make(map[StoreKey]storeParams),
 		stores:       make(map[StoreKey]CommitStore),
 		keysByName:   make(map[string]StoreKey),
+		pruning:      viper.GetString("pruning"),
 	}
 }
 
@@ -263,7 +266,7 @@ func (rs *rootMultiStore) loadCommitStoreFromParams(id CommitID, params storePar
 		// TODO: id?
 		// return NewCommitMultiStore(db, id)
 	case sdk.StoreTypeIAVL:
-		store, err = LoadIAVLStore(db, id)
+		store, err = LoadIAVLStore(db, id, rs.pruning)
 		return
 	case sdk.StoreTypeDB:
 		panic("dbm.DB is not a CommitStore")

@@ -20,14 +20,18 @@ const (
 )
 
 // load the iavl store
-func LoadIAVLStore(db dbm.DB, id CommitID) (CommitStore, error) {
+func LoadIAVLStore(db dbm.DB, id CommitID, pruning string) (CommitStore, error) {
 	tree := iavl.NewVersionedTree(db, defaultIAVLCacheSize)
 	_, err := tree.LoadVersion(id.Version)
 	if err != nil {
 		return nil, err
 	}
-	store := newIAVLStore(tree, defaultIAVLNumRecent, defaultIAVLStoreEvery)
-	return store, nil
+	if pruning == "nothing" {
+		return newIAVLStore(tree, defaultIAVLNumRecent, 1), nil
+	} else if pruning == "everything" {
+		return newIAVLStore(tree, 0, 0), nil
+	}
+	return newIAVLStore(tree, defaultIAVLNumRecent, defaultIAVLStoreEvery), nil
 }
 
 //----------------------------------------
@@ -43,16 +47,15 @@ type iavlStore struct {
 	tree *iavl.VersionedTree
 
 	// How many old versions we hold onto.
-	// A value of 0 means keep no recent states
+	// A value of 0 means keep no recent states.
 	numRecent int64
 
-	// Distance between state-sync waypoint states to be stored
+	// This is the distance between state-sync waypoint states to be stored.
 	// See https://github.com/tendermint/tendermint/issues/828
-	// A value of 1 means store every state
-	// A value of 0 means store no waypoints (node cannot assist in state-sync)
+	// A value of 1 means store every state.
+	// A value of 0 means store no waypoints. (node cannot assist in state-sync)
 	// By default this value should be set the same across all nodes,
-	// so that nodes can know the waypoints their peers store
-	// TODO if set to non-default, signal to peers that the node is not suitable as a state sync source
+	// so that nodes can know the waypoints their peers store.
 	storeEvery int64
 }
 
@@ -76,7 +79,7 @@ func (st *iavlStore) Commit() CommitID {
 		panic(err)
 	}
 
-	// Release an old version of history, if not a sync waypoint
+	// Release an old version of history, if not a sync waypoint.
 	previous := version - 1
 	if st.numRecent < previous {
 		toRelease := previous - st.numRecent
@@ -102,7 +105,7 @@ func (st *iavlStore) LastCommitID() CommitID {
 	}
 }
 
-// VersionExists returns whether or not a given version is stored
+// VersionExists returns whether or not a given version is stored.
 func (st *iavlStore) VersionExists(version int64) bool {
 	return st.tree.VersionExists(version)
 }

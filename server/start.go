@@ -17,6 +17,7 @@ import (
 const (
 	flagWithTendermint = "with-tendermint"
 	flagAddress        = "address"
+	flagPruning        = "pruning"
 )
 
 // StartCmd runs the service passed in, either
@@ -39,6 +40,7 @@ func StartCmd(ctx *Context, appCreator AppCreator) *cobra.Command {
 	// basic flags for abci app
 	cmd.Flags().Bool(flagWithTendermint, true, "run abci app embedded in-process with tendermint")
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
+	cmd.Flags().String(flagPruning, "Pruning strategy: default, nothing, everything", "default")
 
 	// AddNodeFlags adds support for all tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
