@@ -64,15 +64,18 @@ var (
 	// TODO Temporarily set to five minutes for testnets
 	defaultDoubleSignUnbondDuration int64 = 60 * 5
 
-	// TODO Temporarily set to 100 blocks for testnets
-	defaultSignedBlocksWindow int64 = 100
+	// TODO Temporarily set to 40000 blocks for testnets
+	defaultSignedBlocksWindow int64 = 40000
 
 	// TODO Temporarily set to 10 minutes for testnets
 	defaultDowntimeUnbondDuration int64 = 60 * 10
 
+	// TODO Temporarily set to 50% for testnets
 	defaultMinSignedPerWindow sdk.Rat = sdk.NewRat(1, 2)
 
+	// TODO Temporarily set to 5% for testnets
 	defaultSlashFractionDoubleSign = sdk.NewRat(1).Quo(sdk.NewRat(20))
 
+	// TODO Temporarily set to 1% for testnets
 	defaultSlashFractionDowntime = sdk.NewRat(1).Quo(sdk.NewRat(100))
 )
