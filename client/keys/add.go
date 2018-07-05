@@ -164,8 +164,8 @@ type NewKeyBody struct {
 
 // new key response REST body
 type NewKeyResponse struct {
-	Address  string `json:"address"`
-	Mnemonic string `json:"mnemonic"`
+	Address  sdk.Address `json:"address"`
+	Mnemonic string      `json:"mnemonic"`
 }
 
 // add new key REST handler
@@ -216,14 +216,9 @@ func AddNewKeyRequestHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	bech32Account, err := sdk.Bech32ifyAcc(sdk.Address(info.GetPubKey().Address().Bytes()))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
+	address := sdk.Address(info.GetPubKey().Address().Bytes())
 	bz, err := json.Marshal(NewKeyResponse{
-		Address:  bech32Account,
+		Address:  address,
 		Mnemonic: mnemonic,
 	})
 	if err != nil {

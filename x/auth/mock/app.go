@@ -93,7 +93,7 @@ func CreateGenAccounts(numAccs int64, genCoins sdk.Coins) (genAccs []auth.Accoun
 	for i := int64(0); i < numAccs; i++ {
 		privKey := crypto.GenPrivKeyEd25519()
 		pubKey := privKey.PubKey()
-		addr := pubKey.Address()
+		addr := sdk.Address(pubKey.Address())
 
 		genAcc := &auth.BaseAccount{
 			Address: addr,

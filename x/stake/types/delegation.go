@@ -35,17 +35,9 @@ func (d Delegation) GetBondShares() sdk.Rat    { return d.Shares }
 
 //Human Friendly pretty printer
 func (d Delegation) HumanReadableString() (string, error) {
-	bechAcc, err := sdk.Bech32ifyAcc(d.DelegatorAddr)
-	if err != nil {
-		return "", err
-	}
-	bechVal, err := sdk.Bech32ifyAcc(d.ValidatorAddr)
-	if err != nil {
-		return "", err
-	}
 	resp := "Delegation \n"
-	resp += fmt.Sprintf("Delegator: %s\n", bechAcc)
-	resp += fmt.Sprintf("Validator: %s\n", bechVal)
+	resp += fmt.Sprintf("Delegator: %s\n", d.DelegatorAddr)
+	resp += fmt.Sprintf("Validator: %s\n", d.ValidatorAddr)
 	resp += fmt.Sprintf("Shares: %s", d.Shares.String())
 	resp += fmt.Sprintf("Height: %d", d.Height)
 
@@ -74,17 +66,9 @@ func (d UnbondingDelegation) Equal(d2 UnbondingDelegation) bool {
 
 //Human Friendly pretty printer
 func (d UnbondingDelegation) HumanReadableString() (string, error) {
-	bechAcc, err := sdk.Bech32ifyAcc(d.DelegatorAddr)
-	if err != nil {
-		return "", err
-	}
-	bechVal, err := sdk.Bech32ifyAcc(d.ValidatorAddr)
-	if err != nil {
-		return "", err
-	}
 	resp := "Unbonding Delegation \n"
-	resp += fmt.Sprintf("Delegator: %s\n", bechAcc)
-	resp += fmt.Sprintf("Validator: %s\n", bechVal)
+	resp += fmt.Sprintf("Delegator: %s\n", d.DelegatorAddr)
+	resp += fmt.Sprintf("Validator: %s\n", d.ValidatorAddr)
 	resp += fmt.Sprintf("Creation height: %v\n", d.CreationHeight)
 	resp += fmt.Sprintf("Min time to unbond (unix): %v\n", d.MinTime)
 	resp += fmt.Sprintf("Expected balance: %s", d.Balance.String())
@@ -117,22 +101,10 @@ func (d Redelegation) Equal(d2 Redelegation) bool {
 
 //Human Friendly pretty printer
 func (d Redelegation) HumanReadableString() (string, error) {
-	bechAcc, err := sdk.Bech32ifyAcc(d.DelegatorAddr)
-	if err != nil {
-		return "", err
-	}
-	bechValSrc, err := sdk.Bech32ifyAcc(d.ValidatorSrcAddr)
-	if err != nil {
-		return "", err
-	}
-	bechValDst, err := sdk.Bech32ifyAcc(d.ValidatorDstAddr)
-	if err != nil {
-		return "", err
-	}
 	resp := "Redelegation \n"
-	resp += fmt.Sprintf("Delegator: %s\n", bechAcc)
-	resp += fmt.Sprintf("Source Validator: %s\n", bechValSrc)
-	resp += fmt.Sprintf("Destination Validator: %s\n", bechValDst)
+	resp += fmt.Sprintf("Delegator: %s\n", d.DelegatorAddr)
+	resp += fmt.Sprintf("Source Validator: %s\n", d.ValidatorSrcAddr)
+	resp += fmt.Sprintf("Destination Validator: %s\n", d.ValidatorDstAddr)
 	resp += fmt.Sprintf("Creation height: %v\n", d.CreationHeight)
 	resp += fmt.Sprintf("Min time to unbond (unix): %v\n", d.MinTime)
 	resp += fmt.Sprintf("Source shares: %s", d.SharesSrc.String())

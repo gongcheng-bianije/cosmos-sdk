@@ -852,10 +852,10 @@ func TestBurnMultipleOwners(t *testing.T) {
 	app.deliverState.ctx = app.deliverState.ctx.WithChainID(t.Name())
 
 	priv1 := makePrivKey("my secret 1")
-	addr1 := priv1.PubKey().Address()
+	addr1 := sdk.Address(priv1.PubKey().Address())
 
 	priv2 := makePrivKey("my secret 2")
-	addr2 := priv2.PubKey().Address()
+	addr2 := sdk.Address(priv2.PubKey().Address())
 
 	// fund accounts
 	app.accountKeeper.AddCoins(app.deliverState.ctx, addr1, sdk.Coins{{"foocoin", sdk.NewInt(100)}})
@@ -919,10 +919,10 @@ func TestSendBurn(t *testing.T) {
 	app.deliverState.ctx = app.deliverState.ctx.WithChainID(t.Name())
 
 	priv1 := makePrivKey("my secret 1")
-	addr1 := priv1.PubKey().Address()
+	addr1 := sdk.Address(priv1.PubKey().Address())
 
 	priv2 := makePrivKey("my secret 2")
-	addr2 := priv2.PubKey().Address()
+	addr2 := sdk.Address(priv2.PubKey().Address())
 
 	// fund accounts
 	app.accountKeeper.AddCoins(app.deliverState.ctx, addr1, sdk.Coins{{"foocoin", sdk.NewInt(100)}})
