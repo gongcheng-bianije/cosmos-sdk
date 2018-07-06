@@ -164,8 +164,8 @@ type NewKeyBody struct {
 
 // new key response REST body
 type NewKeyResponse struct {
-	Address  sdk.Address `json:"address"`
-	Mnemonic string      `json:"mnemonic"`
+	Address  sdk.AccAddress `json:"address"`
+	Mnemonic string         `json:"mnemonic"`
 }
 
 // add new key REST handler
@@ -216,7 +216,7 @@ func AddNewKeyRequestHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	address := sdk.Address(info.GetPubKey().Address().Bytes())
+	address := sdk.AccAddress(info.GetPubKey().Address().Bytes())
 	bz, err := json.Marshal(NewKeyResponse{
 		Address:  address,
 		Mnemonic: mnemonic,

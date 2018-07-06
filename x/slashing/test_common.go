@@ -23,7 +23,7 @@ import (
 // TODO remove dependencies on staking (should only refer to validator set type from sdk)
 
 var (
-	addrs = []sdk.Address{
+	addrs = []sdk.AccAddress{
 		testAddr("A58856F0FD53BF058B4909A21AEC019107BA6160"),
 		testAddr("A58856F0FD53BF058B4909A21AEC019107BA6161"),
 		testAddr("A58856F0FD53BF058B4909A21AEC019107BA6162"),
@@ -85,12 +85,12 @@ func newPubKey(pk string) (res crypto.PubKey) {
 	return pkEd
 }
 
-func testAddr(addr string) sdk.Address {
+func testAddr(addr string) sdk.AccAddress {
 	res := []byte(addr)
 	return res
 }
 
-func newTestMsgCreateValidator(address sdk.Address, pubKey crypto.PubKey, amt sdk.Int) stake.MsgCreateValidator {
+func newTestMsgCreateValidator(address sdk.AccAddress, pubKey crypto.PubKey, amt sdk.Int) stake.MsgCreateValidator {
 	return stake.MsgCreateValidator{
 		Description:    stake.Description{},
 		ValidatorAddr:  address,

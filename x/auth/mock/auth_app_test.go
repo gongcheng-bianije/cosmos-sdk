@@ -14,7 +14,7 @@ import (
 
 // A mock transaction that has a validation which can fail.
 type testMsg struct {
-	signers     []sdk.Address
+	signers     []sdk.AccAddress
 	positiveNum int64
 }
 
@@ -25,7 +25,7 @@ func (tx testMsg) Type() string                       { return msgType }
 func (tx testMsg) GetMsg() sdk.Msg                    { return tx }
 func (tx testMsg) GetMemo() string                    { return "" }
 func (tx testMsg) GetSignBytes() []byte               { return nil }
-func (tx testMsg) GetSigners() []sdk.Address          { return tx.signers }
+func (tx testMsg) GetSigners() []sdk.AccAddress       { return tx.signers }
 func (tx testMsg) GetSignatures() []auth.StdSignature { return nil }
 func (tx testMsg) ValidateBasic() sdk.Error {
 	if tx.positiveNum >= 0 {
@@ -38,12 +38,12 @@ func (tx testMsg) ValidateBasic() sdk.Error {
 
 var (
 	priv1 = crypto.GenPrivKeyEd25519()
-	addr1 = priv1.PubKey().Address()
+	addr1 = sdk.AccAddress(priv1.PubKey().Address())
 	priv2 = crypto.GenPrivKeyEd25519()
-	addr2 = priv2.PubKey().Address()
+	addr2 = sdk.AccAddress(priv2.PubKey().Address())
 
 	coins    = sdk.Coins{sdk.NewCoin("foocoin", 10)}
-	testMsg1 = testMsg{signers: []sdk.Address{addr1}, positiveNum: 1}
+	testMsg1 = testMsg{signers: []sdk.AccAddress{addr1}, positiveNum: 1}
 )
 
 // initialize the mock application for this module

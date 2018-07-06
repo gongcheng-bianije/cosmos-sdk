@@ -274,7 +274,7 @@ func (tx testTx) Type() string                       { return msgType2 }
 func (tx testTx) GetMemo() string                    { return "" }
 func (tx testTx) GetMsgs() []sdk.Msg                 { return []sdk.Msg{tx} }
 func (tx testTx) GetSignBytes() []byte               { return nil }
-func (tx testTx) GetSigners() []sdk.Address          { return nil }
+func (tx testTx) GetSigners() []sdk.AccAddress       { return nil }
 func (tx testTx) GetSignatures() []auth.StdSignature { return nil }
 func (tx testTx) ValidateBasic() sdk.Error {
 	if tx.positiveNum >= 0 {
@@ -562,7 +562,7 @@ func (tx testUpdatePowerTx) GetMemo() string                    { return "" }
 func (tx testUpdatePowerTx) GetMsgs() []sdk.Msg                 { return []sdk.Msg{tx} }
 func (tx testUpdatePowerTx) GetSignBytes() []byte               { return nil }
 func (tx testUpdatePowerTx) ValidateBasic() sdk.Error           { return nil }
-func (tx testUpdatePowerTx) GetSigners() []sdk.Address          { return nil }
+func (tx testUpdatePowerTx) GetSigners() []sdk.AccAddress       { return nil }
 func (tx testUpdatePowerTx) GetSignatures() []auth.StdSignature { return nil }
 
 func TestValidatorChange(t *testing.T) {
@@ -653,7 +653,7 @@ func TestValidatorChange(t *testing.T) {
 
 // Use burn and send msg types to test multiple msgs in one tx
 type testBurnMsg struct {
-	Addr   sdk.Address
+	Addr   sdk.AccAddress
 	Amount sdk.Coins
 }
 
@@ -670,13 +670,13 @@ func (msg testBurnMsg) ValidateBasic() sdk.Error {
 	}
 	return nil
 }
-func (msg testBurnMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Addr}
+func (msg testBurnMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Addr}
 }
 
 type testSendMsg struct {
-	Sender   sdk.Address
-	Receiver sdk.Address
+	Sender   sdk.AccAddress
+	Receiver sdk.AccAddress
 	Amount   sdk.Coins
 }
 
@@ -693,8 +693,8 @@ func (msg testSendMsg) ValidateBasic() sdk.Error {
 	}
 	return nil
 }
-func (msg testSendMsg) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Sender}
+func (msg testSendMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
 }
 
 // Simple Handlers for burn and send
@@ -805,7 +805,7 @@ func TestMultipleBurn(t *testing.T) {
 	app.deliverState.ctx = app.deliverState.ctx.WithChainID(t.Name())
 
 	priv := makePrivKey("my secret")
-	addr := priv.PubKey().Address()
+	addr := sdk.AccAddress(priv.PubKey().Address())
 
 	app.accountKeeper.AddCoins(app.deliverState.ctx, addr, sdk.Coins{{"foocoin", sdk.NewInt(100)}})
 	require.Equal(t, sdk.Coins{{"foocoin", sdk.NewInt(100)}}, app.accountKeeper.GetCoins(app.deliverState.ctx, addr), "Balance did not update")
@@ -852,10 +852,10 @@ func TestBurnMultipleOwners(t *testing.T) {
 	app.deliverState.ctx = app.deliverState.ctx.WithChainID(t.Name())
 
 	priv1 := makePrivKey("my secret 1")
-	addr1 := sdk.Address(priv1.PubKey().Address())
+	addr1 := sdk.AccAddress(priv1.PubKey().Address())
 
 	priv2 := makePrivKey("my secret 2")
-	addr2 := sdk.Address(priv2.PubKey().Address())
+	addr2 := sdk.AccAddress(priv2.PubKey().Address())
 
 	// fund accounts
 	app.accountKeeper.AddCoins(app.deliverState.ctx, addr1, sdk.Coins{{"foocoin", sdk.NewInt(100)}})
@@ -919,10 +919,10 @@ func TestSendBurn(t *testing.T) {
 	app.deliverState.ctx = app.deliverState.ctx.WithChainID(t.Name())
 
 	priv1 := makePrivKey("my secret 1")
-	addr1 := sdk.Address(priv1.PubKey().Address())
+	addr1 := sdk.AccAddress(priv1.PubKey().Address())
 
 	priv2 := makePrivKey("my secret 2")
-	addr2 := sdk.Address(priv2.PubKey().Address())
+	addr2 := sdk.AccAddress(priv2.PubKey().Address())
 
 	// fund accounts
 	app.accountKeeper.AddCoins(app.deliverState.ctx, addr1, sdk.Coins{{"foocoin", sdk.NewInt(100)}})

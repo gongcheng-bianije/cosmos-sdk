@@ -16,7 +16,7 @@ import (
 
 var (
 	priv1 = crypto.GenPrivKeyEd25519()
-	addr1 = sdk.Address(priv1.PubKey().Address())
+	addr1 = sdk.AccAddress(priv1.PubKey().Address())
 	coins = sdk.Coins{sdk.NewCoin("foocoin", 10)}
 )
 
@@ -62,7 +62,7 @@ func getInitChainer(mapp *mock.App, keeper stake.Keeper) sdk.InitChainer {
 }
 
 func checkValidator(t *testing.T, mapp *mock.App, keeper stake.Keeper,
-	addr sdk.Address, expFound bool) stake.Validator {
+	addr sdk.AccAddress, expFound bool) stake.Validator {
 	ctxCheck := mapp.BaseApp.NewContext(true, abci.Header{})
 	validator, found := keeper.GetValidator(ctxCheck, addr1)
 	require.Equal(t, expFound, found)
@@ -70,7 +70,7 @@ func checkValidator(t *testing.T, mapp *mock.App, keeper stake.Keeper,
 }
 
 func checkValidatorSigningInfo(t *testing.T, mapp *mock.App, keeper Keeper,
-	addr sdk.Address, expFound bool) ValidatorSigningInfo {
+	addr sdk.ValAddress, expFound bool) ValidatorSigningInfo {
 	ctxCheck := mapp.BaseApp.NewContext(true, abci.Header{})
 	signingInfo, found := keeper.getValidatorSigningInfo(ctxCheck, addr)
 	require.Equal(t, expFound, found)
@@ -101,10 +101,10 @@ func TestSlashingMsgs(t *testing.T) {
 	require.Equal(t, addr1, validator.Owner)
 	require.Equal(t, sdk.Bonded, validator.Status())
 	require.True(sdk.RatEq(t, sdk.NewRat(10), validator.PoolShares.Bonded()))
-	unrevokeMsg := MsgUnrevoke{ValidatorAddr: sdk.Address(validator.PubKey.Address())}
+	unrevokeMsg := MsgUnrevoke{ValidatorAddr: sdk.AccAddress(validator.PubKey.Address())}
 
 	// no signing info yet
-	checkValidatorSigningInfo(t, mapp, keeper, addr1, false)
+	checkValidatorSigningInfo(t, mapp, keeper, sdk.ValAddress(addr1), false)
 
 	// unrevoke should fail with validator not revoked
 	res := mock.SignCheck(mapp.BaseApp, []sdk.Msg{unrevokeMsg}, []int64{0}, []int64{1}, priv1)

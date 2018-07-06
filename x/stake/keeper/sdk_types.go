@@ -50,7 +50,7 @@ func (k Keeper) IterateValidatorsBonded(ctx sdk.Context, fn func(index int64, va
 }
 
 // get the sdk.validator for a particular address
-func (k Keeper) Validator(ctx sdk.Context, address sdk.Address) sdk.Validator {
+func (k Keeper) Validator(ctx sdk.Context, address sdk.AccAddress) sdk.Validator {
 	val, found := k.GetValidator(ctx, address)
 	if !found {
 		return nil
@@ -76,7 +76,7 @@ func (k Keeper) GetValidatorSet() sdk.ValidatorSet {
 }
 
 // get the delegation for a particular set of delegator and validator addresses
-func (k Keeper) Delegation(ctx sdk.Context, addrDel sdk.Address, addrVal sdk.Address) sdk.Delegation {
+func (k Keeper) Delegation(ctx sdk.Context, addrDel sdk.AccAddress, addrVal sdk.AccAddress) sdk.Delegation {
 	bond, ok := k.GetDelegation(ctx, addrDel, addrVal)
 	if !ok {
 		return nil
@@ -85,7 +85,7 @@ func (k Keeper) Delegation(ctx sdk.Context, addrDel sdk.Address, addrVal sdk.Add
 }
 
 // iterate through the active validator set and perform the provided function
-func (k Keeper) IterateDelegations(ctx sdk.Context, delAddr sdk.Address, fn func(index int64, delegation sdk.Delegation) (stop bool)) {
+func (k Keeper) IterateDelegations(ctx sdk.Context, delAddr sdk.AccAddress, fn func(index int64, delegation sdk.Delegation) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 	key := GetDelegationsKey(delAddr, k.cdc)
 	iterator := sdk.KVStorePrefixIterator(store, key)

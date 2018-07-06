@@ -36,7 +36,7 @@ var (
 const maxDigitsForAccount = 12 // ~220,000,000 atoms created at launch
 
 // get the key for the validator with address
-func GetValidatorKey(ownerAddr sdk.Address) []byte {
+func GetValidatorKey(ownerAddr sdk.AccAddress) []byte {
 	return append(ValidatorsKey, ownerAddr.Bytes()...)
 }
 
@@ -46,7 +46,7 @@ func GetValidatorByPubKeyIndexKey(pubkey crypto.PubKey) []byte {
 }
 
 // get the key for the current validator group, ordered like tendermint
-func GetValidatorsBondedIndexKey(ownerAddr sdk.Address) []byte {
+func GetValidatorsBondedIndexKey(ownerAddr sdk.AccAddress) []byte {
 	return append(ValidatorsBondedIndexKey, ownerAddr.Bytes()...)
 }
 
@@ -85,19 +85,19 @@ func GetValidatorPowerRank(validator types.Validator, pool types.Pool) []byte {
 }
 
 // get the key for the accumulated update validators
-func GetTendermintUpdatesKey(ownerAddr sdk.Address) []byte {
+func GetTendermintUpdatesKey(ownerAddr sdk.AccAddress) []byte {
 	return append(TendermintUpdatesKey, ownerAddr.Bytes()...)
 }
 
 //________________________________________________________________________________
 
 // get the key for delegator bond with validator
-func GetDelegationKey(delegatorAddr, validatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetDelegationKey(delegatorAddr, validatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	return append(GetDelegationsKey(delegatorAddr, cdc), validatorAddr.Bytes()...)
 }
 
 // get the prefix for a delegator for all validators
-func GetDelegationsKey(delegatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetDelegationsKey(delegatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&delegatorAddr)
 	return append(DelegationKey, res...)
 }
@@ -105,25 +105,25 @@ func GetDelegationsKey(delegatorAddr sdk.Address, cdc *wire.Codec) []byte {
 //________________________________________________________________________________
 
 // get the key for an unbonding delegation
-func GetUBDKey(delegatorAddr, validatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetUBDKey(delegatorAddr, validatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	return append(GetUBDsKey(delegatorAddr, cdc), validatorAddr.Bytes()...)
 }
 
 // get the index-key for an unbonding delegation, stored by validator-index
-func GetUBDByValIndexKey(delegatorAddr, validatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetUBDByValIndexKey(delegatorAddr, validatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	return append(GetUBDsByValIndexKey(validatorAddr, cdc), delegatorAddr.Bytes()...)
 }
 
 //______________
 
 // get the prefix for all unbonding delegations from a delegator
-func GetUBDsKey(delegatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetUBDsKey(delegatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&delegatorAddr)
 	return append(UnbondingDelegationKey, res...)
 }
 
 // get the prefix keyspace for the indexs of unbonding delegations for a validator
-func GetUBDsByValIndexKey(validatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetUBDsByValIndexKey(validatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&validatorAddr)
 	return append(UnbondingDelegationByValIndexKey, res...)
 }
@@ -132,7 +132,7 @@ func GetUBDsByValIndexKey(validatorAddr sdk.Address, cdc *wire.Codec) []byte {
 
 // get the key for a redelegation
 func GetREDKey(delegatorAddr, validatorSrcAddr,
-	validatorDstAddr sdk.Address, cdc *wire.Codec) []byte {
+	validatorDstAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 
 	return append(
 		GetREDsKey(delegatorAddr, cdc),
@@ -144,7 +144,7 @@ func GetREDKey(delegatorAddr, validatorSrcAddr,
 
 // get the index-key for a redelegation, stored by source-validator-index
 func GetREDByValSrcIndexKey(delegatorAddr, validatorSrcAddr,
-	validatorDstAddr sdk.Address, cdc *wire.Codec) []byte {
+	validatorDstAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 
 	return append(
 		GetREDsFromValSrcIndexKey(validatorSrcAddr, cdc),
@@ -156,7 +156,7 @@ func GetREDByValSrcIndexKey(delegatorAddr, validatorSrcAddr,
 
 // get the index-key for a redelegation, stored by destination-validator-index
 func GetREDByValDstIndexKey(delegatorAddr, validatorSrcAddr,
-	validatorDstAddr sdk.Address, cdc *wire.Codec) []byte {
+	validatorDstAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 
 	return append(
 		GetREDsToValDstIndexKey(validatorDstAddr, cdc),
@@ -169,27 +169,27 @@ func GetREDByValDstIndexKey(delegatorAddr, validatorSrcAddr,
 //______________
 
 // get the prefix keyspace for redelegations from a delegator
-func GetREDsKey(delegatorAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetREDsKey(delegatorAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&delegatorAddr)
 	return append(RedelegationKey, res...)
 }
 
 // get the prefix keyspace for all redelegations redelegating away from a source validator
-func GetREDsFromValSrcIndexKey(validatorSrcAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetREDsFromValSrcIndexKey(validatorSrcAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&validatorSrcAddr)
 	return append(RedelegationByValSrcIndexKey, res...)
 }
 
 // get the prefix keyspace for all redelegations redelegating towards a destination validator
-func GetREDsToValDstIndexKey(validatorDstAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetREDsToValDstIndexKey(validatorDstAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 	res := cdc.MustMarshalBinary(&validatorDstAddr)
 	return append(RedelegationByValDstIndexKey, res...)
 }
 
 // get the prefix keyspace for all redelegations redelegating towards a destination validator
 // from a particular delegator
-func GetREDsByDelToValDstIndexKey(delegatorAddr sdk.Address,
-	validatorDstAddr sdk.Address, cdc *wire.Codec) []byte {
+func GetREDsByDelToValDstIndexKey(delegatorAddr sdk.AccAddress,
+	validatorDstAddr sdk.AccAddress, cdc *wire.Codec) []byte {
 
 	return append(
 		GetREDsToValDstIndexKey(validatorDstAddr, cdc),

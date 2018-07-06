@@ -388,14 +388,14 @@ var DefaultAppInit = AppInit{
 
 // simple genesis tx
 type SimpleGenTx struct {
-	Addr sdk.Address `json:"addr"`
+	Addr sdk.AccAddress `json:"addr"`
 }
 
 // Generate a genesis transaction
 func SimpleAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig serverconfig.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
-	var addr sdk.Address
+	var addr sdk.AccAddress
 	var secret string
 	addr, secret, err = GenerateCoinKey()
 	if err != nil {
@@ -456,7 +456,7 @@ func SimpleAppGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appState j
 
 // GenerateCoinKey returns the address of a public key, along with the secret
 // phrase to recover the private key.
-func GenerateCoinKey() (sdk.Address, string, error) {
+func GenerateCoinKey() (sdk.AccAddress, string, error) {
 
 	// construct an in-memory key store
 	keybase := keys.New(
@@ -469,12 +469,12 @@ func GenerateCoinKey() (sdk.Address, string, error) {
 		return nil, "", err
 	}
 	addr := info.GetPubKey().Address()
-	return sdk.Address(addr), secret, nil
+	return sdk.AccAddress(addr), secret, nil
 }
 
 // GenerateSaveCoinKey returns the address of a public key, along with the secret
 // phrase to recover the private key.
-func GenerateSaveCoinKey(clientRoot, keyName, keyPass string, overwrite bool) (sdk.Address, string, error) {
+func GenerateSaveCoinKey(clientRoot, keyName, keyPass string, overwrite bool) (sdk.AccAddress, string, error) {
 
 	// get the keystore from the client
 	keybase, err := clkeys.GetKeyBaseFromDir(clientRoot)
@@ -496,5 +496,5 @@ func GenerateSaveCoinKey(clientRoot, keyName, keyPass string, overwrite bool) (s
 		return nil, "", err
 	}
 	addr := info.GetPubKey().Address()
-	return sdk.Address(addr), secret, nil
+	return sdk.AccAddress(addr), secret, nil
 }

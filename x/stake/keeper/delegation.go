@@ -9,7 +9,7 @@ import (
 
 // load a delegation
 func (k Keeper) GetDelegation(ctx sdk.Context,
-	delegatorAddr, validatorAddr sdk.Address) (delegation types.Delegation, found bool) {
+	delegatorAddr, validatorAddr sdk.AccAddress) (delegation types.Delegation, found bool) {
 
 	store := ctx.KVStore(k.storeKey)
 	delegatorBytes := store.Get(GetDelegationKey(delegatorAddr, validatorAddr, k.cdc))
@@ -42,7 +42,7 @@ func (k Keeper) GetAllDelegations(ctx sdk.Context) (delegations []types.Delegati
 }
 
 // load all delegations for a delegator
-func (k Keeper) GetDelegations(ctx sdk.Context, delegator sdk.Address,
+func (k Keeper) GetDelegations(ctx sdk.Context, delegator sdk.AccAddress,
 	maxRetrieve int16) (delegations []types.Delegation) {
 
 	store := ctx.KVStore(k.storeKey)
@@ -82,7 +82,7 @@ func (k Keeper) RemoveDelegation(ctx sdk.Context, delegation types.Delegation) {
 
 // load a unbonding delegation
 func (k Keeper) GetUnbondingDelegation(ctx sdk.Context,
-	DelegatorAddr, ValidatorAddr sdk.Address) (ubd types.UnbondingDelegation, found bool) {
+	DelegatorAddr, ValidatorAddr sdk.AccAddress) (ubd types.UnbondingDelegation, found bool) {
 
 	store := ctx.KVStore(k.storeKey)
 	ubdKey := GetUBDKey(DelegatorAddr, ValidatorAddr, k.cdc)
@@ -96,7 +96,7 @@ func (k Keeper) GetUnbondingDelegation(ctx sdk.Context,
 }
 
 // load all unbonding delegations from a particular validator
-func (k Keeper) GetUnbondingDelegationsFromValidator(ctx sdk.Context, valAddr sdk.Address) (unbondingDelegations []types.UnbondingDelegation) {
+func (k Keeper) GetUnbondingDelegationsFromValidator(ctx sdk.Context, valAddr sdk.AccAddress) (unbondingDelegations []types.UnbondingDelegation) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, GetUBDsByValIndexKey(valAddr, k.cdc))
 	i := 0
@@ -136,7 +136,7 @@ func (k Keeper) RemoveUnbondingDelegation(ctx sdk.Context, ubd types.UnbondingDe
 
 // load a redelegation
 func (k Keeper) GetRedelegation(ctx sdk.Context,
-	DelegatorAddr, ValidatorSrcAddr, ValidatorDstAddr sdk.Address) (red types.Redelegation, found bool) {
+	DelegatorAddr, ValidatorSrcAddr, ValidatorDstAddr sdk.AccAddress) (red types.Redelegation, found bool) {
 
 	store := ctx.KVStore(k.storeKey)
 	redKey := GetREDKey(DelegatorAddr, ValidatorSrcAddr, ValidatorDstAddr, k.cdc)
@@ -150,7 +150,7 @@ func (k Keeper) GetRedelegation(ctx sdk.Context,
 }
 
 // load all redelegations from a particular validator
-func (k Keeper) GetRedelegationsFromValidator(ctx sdk.Context, valAddr sdk.Address) (redelegations []types.Redelegation) {
+func (k Keeper) GetRedelegationsFromValidator(ctx sdk.Context, valAddr sdk.AccAddress) (redelegations []types.Redelegation) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, GetREDsFromValSrcIndexKey(valAddr, k.cdc))
 	i := 0
@@ -171,7 +171,7 @@ func (k Keeper) GetRedelegationsFromValidator(ctx sdk.Context, valAddr sdk.Addre
 
 // has a redelegation
 func (k Keeper) HasReceivingRedelegation(ctx sdk.Context,
-	DelegatorAddr, ValidatorDstAddr sdk.Address) bool {
+	DelegatorAddr, ValidatorDstAddr sdk.AccAddress) bool {
 
 	store := ctx.KVStore(k.storeKey)
 	prefix := GetREDsByDelToValDstIndexKey(DelegatorAddr, ValidatorDstAddr, k.cdc)
@@ -208,7 +208,7 @@ func (k Keeper) RemoveRedelegation(ctx sdk.Context, red types.Redelegation) {
 //_____________________________________________________________________________________
 
 // Perform a delegation, set/update everything necessary within the store
-func (k Keeper) Delegate(ctx sdk.Context, delegatorAddr sdk.Address, bondAmt sdk.Coin,
+func (k Keeper) Delegate(ctx sdk.Context, delegatorAddr sdk.AccAddress, bondAmt sdk.Coin,
 	validator types.Validator) (newShares sdk.Rat, err sdk.Error) {
 
 	// Get or create the delegator delegation
@@ -241,7 +241,7 @@ func (k Keeper) Delegate(ctx sdk.Context, delegatorAddr sdk.Address, bondAmt sdk
 }
 
 // unbond the the delegation return
-func (k Keeper) unbond(ctx sdk.Context, delegatorAddr, validatorAddr sdk.Address,
+func (k Keeper) unbond(ctx sdk.Context, delegatorAddr, validatorAddr sdk.AccAddress,
 	shares sdk.Rat) (amount int64, err sdk.Error) {
 
 	// check if delegation has any shares in it unbond
@@ -300,7 +300,7 @@ func (k Keeper) unbond(ctx sdk.Context, delegatorAddr, validatorAddr sdk.Address
 //______________________________________________________________________________________________________
 
 // complete unbonding an unbonding record
-func (k Keeper) BeginUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr sdk.Address, sharesAmount sdk.Rat) sdk.Error {
+func (k Keeper) BeginUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr sdk.AccAddress, sharesAmount sdk.Rat) sdk.Error {
 
 	returnAmount, err := k.unbond(ctx, delegatorAddr, validatorAddr, sharesAmount)
 	if err != nil {
@@ -324,7 +324,7 @@ func (k Keeper) BeginUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr sdk
 }
 
 // complete unbonding an unbonding record
-func (k Keeper) CompleteUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr sdk.Address) sdk.Error {
+func (k Keeper) CompleteUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr sdk.AccAddress) sdk.Error {
 
 	ubd, found := k.GetUnbondingDelegation(ctx, delegatorAddr, validatorAddr)
 	if !found {
@@ -347,7 +347,7 @@ func (k Keeper) CompleteUnbonding(ctx sdk.Context, delegatorAddr, validatorAddr 
 
 // complete unbonding an unbonding record
 func (k Keeper) BeginRedelegation(ctx sdk.Context, delegatorAddr, validatorSrcAddr,
-	validatorDstAddr sdk.Address, sharesAmount sdk.Rat) sdk.Error {
+	validatorDstAddr sdk.AccAddress, sharesAmount sdk.Rat) sdk.Error {
 
 	// check if this is a transitive redelegation
 	if k.HasReceivingRedelegation(ctx, delegatorAddr, validatorSrcAddr) {
@@ -388,7 +388,7 @@ func (k Keeper) BeginRedelegation(ctx sdk.Context, delegatorAddr, validatorSrcAd
 }
 
 // complete unbonding an ongoing redelegation
-func (k Keeper) CompleteRedelegation(ctx sdk.Context, delegatorAddr, validatorSrcAddr, validatorDstAddr sdk.Address) sdk.Error {
+func (k Keeper) CompleteRedelegation(ctx sdk.Context, delegatorAddr, validatorSrcAddr, validatorDstAddr sdk.AccAddress) sdk.Error {
 
 	red, found := k.GetRedelegation(ctx, delegatorAddr, validatorSrcAddr, validatorDstAddr)
 	if !found {

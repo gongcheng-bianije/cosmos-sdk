@@ -25,7 +25,7 @@ func SetGenesis(app *App, accs []auth.Account) {
 }
 
 // check an account balance
-func CheckBalance(t *testing.T, app *App, addr sdk.Address, exp sdk.Coins) {
+func CheckBalance(t *testing.T, app *App, addr sdk.AccAddress, exp sdk.Coins) {
 	ctxCheck := app.BaseApp.NewContext(true, abci.Header{})
 	res := app.AccountMapper.GetAccount(ctxCheck, addr)
 	require.Equal(t, exp, res.GetCoins())
